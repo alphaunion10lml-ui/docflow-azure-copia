@@ -1,0 +1,46 @@
+name: Deploy API (App Service)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "src/DocFlow.Api/**"
+      - "Directory.Packages.props"
+      - "DocFlow.sln"
+      - ".github/workflows/deploy-api.yml"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: demo
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build & Publish
+        run: |
+          dotnet restore DocFlow.sln
+          dotnet publish src/DocFlow.Api/DocFlow.Api.csproj -c Release -o ./out/api
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.WEBAPP_NAME }}
+          package: ./out/api
