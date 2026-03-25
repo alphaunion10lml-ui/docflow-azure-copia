@@ -15,7 +15,7 @@ public sealed class ProcessUploadFunction(DocFlowStorage storage, ILoggerFactory
 
     [Function("ProcessUpload")]
     public async Task Run(
-        [BlobTrigger("uploads/{name}", Connection = "DocFlowStorage", Source = BlobTriggerSource.EventGrid)] Stream blobStream,
+        [BlobTrigger("uploads/{name}", Connection = "DocFlowStorage")] Stream blobStream,
         string name,
         CancellationToken ct)
     {
